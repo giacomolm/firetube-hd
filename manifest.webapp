@@ -1,0 +1,10 @@
+{
+    "version": "0.1",
+    "name": "FireTube HD",
+    "description": "Your new awesome Open Web App",
+    "launch_path": "/index.html",
+    "type": "privileged",
+    "permissions": {
+        "systemXHR": { }
+    }
+}

@@ -1,0 +1,118 @@
+body {
+	/*-webkit-text-size-adjust: none;*/
+	/*background: #5a5959 url(../images/menuBg.gif) top left repeat-y;*/
+}
+
+.pages{
+	 
+	}
+.pages h3 {
+	font-size: 20px;
+	margin: 0;
+}
+
+.menu {
+	background-color: #5a5959;
+	float: left;
+	height: 100%;
+	width:0px;
+}
+
+.closeMenu {
+	background-color: #5a5959;
+	float: left;
+	height: 100%;
+	width:0px;
+}
+
+div.menu:target{
+		   -webkit-transform: translateZ(0);
+   -moz-transform: translateZ(0);
+   -ms-transform: translateZ(0);
+   -o-transform: translateZ(0);
+   transform: translateZ(0);
+-webkit-backface-visibility: hidden;
+   -moz-backface-visibility: hidden;
+   -ms-backface-visibility: hidden;
+   backface-visibility: hidden;
+
+   -webkit-perspective: 1000;
+   -moz-perspective: 1000;
+   -ms-perspective: 1000;
+   perspective: 1000;
+
+
+	background-color: #5a5959;
+	width : 165px;
+	transition : width linear 0.2s 0.1s;
+}
+
+div.menu:target + .home{
+	margin-left : 165px;
+	transition : margin-left  linear 0.2s 0.1s;
+}
+
+div.closeMenu:target{
+	background-color: #5a5959;
+	width : 0px;
+	transition : width linear 0.2s 0.1s;
+}
+
+div.closeMenu:target + .home{
+	margin-left : 0px;
+	transition : margin-left  linear 0.2s 0.1s;
+}
+
+#menu h3 {
+	font-family: arial;
+	font-size: 12px;
+	color: #fff;
+	margin: 0;
+	padding: 4px 0 4px 10px;
+	background: -webkit-gradient(linear,left top,left bottom,color-stop(5%,rgba(90,89,89,1)),color-stop(85%,rgba(66,65,65,1)));
+	border-top: solid #6b6b6b 1px;
+	border-bottom: solid #3d3d3d 1px;
+	text-shadow: 0 -1px 1px #333;
+}
+
+#menu ul {
+	margin: 0;
+	padding: 0;
+	width: inherit;
+}
+
+#menu ul li a:link,
+#menu ul li a:visited ,
+#menu ul li div{
+	border-bottom: solid #333 1px;
+	box-shadow: 0 1px 0 #727272;
+	color: #fff;
+	line-height:2em;
+	font-family: arial;
+	font-size: 14px;
+	padding: 5px 0 5px 5px;
+	text-decoration: none;
+	text-shadow: 0 1px 1px #000;
+}
+
+#menu ul li div{
+	white-space: nowrap;
+}
+
+#menu ul li a:hover,
+#menu ul li a:active {
+	background-color: #716f6f;
+}
+
+.menuIco{
+	width : 25px;
+	height : 28px;
+	margin-left : 10px;
+	margin-top: 10px;
+}
+
+.active {
+	background: -webkit-gradient(linear,left top,left bottom,color-stop(0%,rgba(30,29,29,1)),color-stop(21%,rgba(56,55,55,1)));
+	color: #fff;
+	text-shadow: 0 1px 1px #000;
+}
