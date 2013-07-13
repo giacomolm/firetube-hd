@@ -194,6 +194,7 @@
 				r=urls[i].match(/6s=([0-Z]*.[0-Z]*)/);
 				if(r && tm){
 					si = new Array();
+					console.log('length of key '+r[1].length);
 					si[1] = k(r[1]);
 					console.log(tm[1]+'\nr '+r[1]+' \ns '+si[1]);
 				}
@@ -1049,7 +1050,7 @@
         } else {
             if (r.length == 86) {
 	        r = r.substring(2,63) +  r.substring(82,83) + r.substring(64,82) + r.substring(63,64);
-                //r = r.substr(2, 15) + r.substr(0, 1) + r.substr(18, 23) + r.substr(79, 1) + r.substr(42, 1) + r.substr(43, 36) + r.substr(82, 1) + r.substr(80, 2) + r.substr(41, 1)
+                //s[2:63] + s[82] + s[64:82] + s[63]
             } else {
                 if (r.length == 85) {
                     var q = r.substr(44, 40).split("").reverse().join("");
@@ -1062,9 +1063,11 @@
                         r = q + r.substr(43, 1) + p.substr(0, 6) + r.substr(2, 1) + p.substr(7, 9) + p.substr(39, 1) + p.substr(17, 22) + p.substr(16, 1)
                     } else {
                         if (r.length == 83) {
-                            var q = r.substr(43, 40).split("").reverse().join("");
-                            var p = r.substr(2, 40).split("").reverse().join("");
-                            r = q.substr(30, 1) + q.substr(1, 26) + p.substr(39, 1) + q.substr(28, 2) + q.substr(0, 1) + q.substr(31, 9) + r.substr(42, 1) + p.substr(0, 5) + q.substr(27, 1) + p.substr(6, 33) + p.substr(5, 1)
+                            //var q = r.substr(43, 40).split("").reverse().join("");
+                            //var p = r.substr(2, 40).split("").reverse().join("");
+                            //s[6] + s[3:6] + s[33] + s[7:24] + s[0] + s[25:33] + s[53] + s[34:53] + s[24] + s[54:]
+			    r = r.substring(6,7) + r.substring(3,6) + r.substring(33,34)+r.substring(7,24) + r.substring(0,1) + r.substring(25,33) + r.substring(53,54) + r.substring(34,53) + r.substring(24,25) + r.substring(54, 83);
+			    console.log('r '+r);
                         } else {
                             if (r.length == 82) {
                                 var q = r.substr(34, 48).split("").reverse().join("");
@@ -1115,7 +1118,7 @@
 				<input id="url_field" class="url_field" type="text" value="Search or Enter youtube link video" onfocus="document.getElementById('search_div').scrollIntoView(true); if(this.value == 'Search or Enter youtube link video') {this.value=''}" onblur="if(this.value == ''){this.value ='Search or Enter youtube link video'}" onkeydown="if (event.keyCode == 13) {document.getElementById('url_button').click(); this.blur()}" onkeyup="loadSuggest(this.value)">
 			</div>
 			<div style="float:right">
-				<a class="reset_button" data-role="button" onclick="document.getElementById('url_field').value=''; document.getElementById('url_field').focus();" ></a>
+				<a class="reset_button" data-role="button" onclick="document.getElementById('uurl_field').value=''; document.getElementById('url_field').focus();" ></a>
 				<a class="url_button" data-role="button" onclick="fetch_data(document.getElementById('url_field').value)" id="url_button" ></a>
 			</div>
 		  </div>
