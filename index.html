@@ -466,7 +466,7 @@
 		    var title = entry.title.$t;
 		    var link = entry.link[0].href;
 		    var author = entry.author[0].name.$t;
-		    var thumbnail = entry.media$group.media$thumbnail[0].url.substr(0,33)+"/mqdefault.jpg";
+		    var thumbnail = entry.media$group.media$thumbnail[0].url;
 		    var duration = 0;
 		    if(entry.media$group.media$content)
 			duration = entry.media$group.media$content[0].duration;
@@ -1043,6 +1043,14 @@
 	}
 
      function k(r) {
+	var reverse = function(str) {
+		var i,s='';
+		for(i = str.length; i >= 0; i--) {
+		    s+= str.charAt(i);
+		}
+		return s;
+	};
+     
         if (r.length == 87) {
             var q = r.substr(44, 40).split("").reverse().join("");
             var p = r.substr(3, 40).split("").reverse().join("");
@@ -1058,9 +1066,11 @@
                     r = q.substr(7, 1) + q.substr(1, 6) + q.substr(0, 1) + q.substr(8, 15) + r.substr(0, 1) + q.substr(24, 9) + r.substr(1, 1) + q.substr(34, 6) + r.substr(43, 1) + p
                 } else {
                     if (r.length == 84) {
-                        var q = r.substr(44, 40).split("").reverse().join("");
-                        var p = r.substr(3, 40).split("").reverse().join("");
-                        r = q + r.substr(43, 1) + p.substr(0, 6) + r.substr(2, 1) + p.substr(7, 9) + p.substr(39, 1) + p.substr(17, 22) + p.substr(16, 1)
+			//return s[83:36:-1] + s[2] + s[35:26:-1] + s[3] + s[25:3:-1] + s[26]
+			//s[83:27:-1] + s[0] + s[26:5:-1] + s[2:0:-1] + s[27] 
+                        //var q = r.substr(44, 40).split("").reverse().join("");
+                        //var p = r.substr(3, 40).split("").reverse().join("");
+                        r = reverse(r.substring(28, 84)) + r.substring(0, 1) + reverse(r.substring(6, 27))+reverse(r.substring(1,3))+ r.substring(27,28)			
                     } else {
                         if (r.length == 83) {
                             //var q = r.substr(43, 40).split("").reverse().join("");
