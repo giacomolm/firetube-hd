@@ -2,14 +2,13 @@
 <html>
 <head>
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
 	<meta name="apple-mobile-web-app-capable" content="yes"/>
 	<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
-	<!--<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;" />-->
 	<meta name="keywords" content="" />
 	<meta name="description" content="" />
-  <title>HDeos | Play Youtube Video in HD</title>
+  <title>FireTube HD | Play Youtube Video in HD</title>
   <link href="./style/style.css" rel="stylesheet" type="text/css">
   <link rel="stylesheet" href="./style/autosuggest_inquisitor.css" type="text/css" media="screen" charset="utf-8" />
 
@@ -20,28 +19,10 @@
 	<link rel="stylesheet" href="style/main.css" />
    
   
-  <script type="text/javascript"  src="./js/jquery-1.9.1.min.js"></script>
+  <script type="text/javascript"  src="./js/zepto.min.js"></script>
   <script type="text/javascript"  src="./js/hammer.min.js"></script>
   <script type="text/javascript">
 
-	/*
-	    var yql="http://www.youtube.com/get_video_info?video_id=MdEacpPLBzE&eurl=http%3A%2F%2Flocalhost%3A8080%2Fvideo-js%2Fdemo.html&el=embedded&hl=it_IT&width=640&height=385"
-		//MAKE YAHOO YQL QUERY  
-		$.getJSON(yql,function(data) {
-			  alert(data.results[0]);
-			//BUILD CALLBACK FUNCTION
-			if(typeof callback === 'function') {  
-			    callback(data.results[0]);
-			  
-			}  
- 
-		//WRITES ERROR TO LOG	
-	    }).error(function(jqXHR, textStatus, errorThrown) { 
-		console.log(errorThrown); }
-	    ); 
-	 */
-	
-	
 	var source;
 	var myPlayer;
 	var loader;
@@ -194,7 +175,7 @@
 				r=urls[i].match(/6s=([0-Z]*.[0-Z]*)/);
 				if(r && tm){
 					si = new Array();
-					console.log('length of key '+r[1].length);
+					alert('length of key '+r[1].length);
 					si[1] = k(r[1]);
 					console.log(tm[1]+'\nr '+r[1]+' \ns '+si[1]);
 				}
@@ -1052,9 +1033,8 @@
 	};
      
         if (r.length == 87) {
-            var q = r.substr(44, 40).split("").reverse().join("");
-            var p = r.substr(3, 40).split("").reverse().join("");
-            r = q.substr(21, 1) + q.substr(1, 20) + q.substr(0, 1) + q.substr(22, 9) + r.substr(0, 1) + q.substr(32, 8) + r.substr(43, 1) + p
+	                   //s[83:53:-1] +                  s[3] +                                    s[52:40:-1] +            s[86] +                           s[39:10:-1] +                s[0] +                  s[9:3:-1] +                  s[53] 
+            r = reverse(r.substring(54, 84)) + r.substring(3, 4) + reverse(r.substring(41, 53))+r.substring(86, 87) +reverse(r.substring(11,40))+ r.substring(0, 1) + reverse(r.substring(4,10))+r.substring(53, 54) 
         } else {
             if (r.length == 86) {
 	        r = r.substring(2,63) +  r.substring(82,83) + r.substring(64,82) + r.substring(63,64);
@@ -1066,7 +1046,6 @@
                     r = q.substr(7, 1) + q.substr(1, 6) + q.substr(0, 1) + q.substr(8, 15) + r.substr(0, 1) + q.substr(24, 9) + r.substr(1, 1) + q.substr(34, 6) + r.substr(43, 1) + p
                 } else {
                     if (r.length == 84) {
-			//return s[83:36:-1] + s[2] + s[35:26:-1] + s[3] + s[25:3:-1] + s[26]
 			//s[83:27:-1] + s[0] + s[26:5:-1] + s[2:0:-1] + s[27] 
                         //var q = r.substr(44, 40).split("").reverse().join("");
                         //var p = r.substr(3, 40).split("").reverse().join("");
