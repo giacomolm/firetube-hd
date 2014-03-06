@@ -1,0 +1,41 @@
+define(["jquery", "underscore", "backbone", "ractive", "collections/Videos","utils","text!templates/playerView.html"],
+    function ($, _, Backbone, Ractive, Videos, Utils, template) {
+
+    var playerView = Backbone.View.extend({
+
+        //template: ractive.compile(template),
+       
+        events : {
+            "touchend #formats li" : "changeFormat",
+	    "mousedown #formats li" : "changeFormat",
+        },
+	
+        initialize: function () {
+		this.collection = new Videos();
+		this.collection.on("completed", this.setVideos, this);
+		Utils.display(this.model, this.collection);
+        },
+	
+	setVideos: function(){
+		this.data = this.collection.get(0);	
+		this.render();
+	},
+       
+	changeFormat: function(ev){
+		alert($(ev.target).attr("id"));
+		var temp = this.data.urls[0];
+		this.data.urls[0] = this.data.urls[$(ev.target).attr("id")];
+		this.data.urls[$(ev.target).attr("id")] = temp;
+		this.render();
+	},
+
+        render: function (eventName) {
+            this.template = new Ractive({el : $(this.el), template: template, data: this.data});
+            return this;
+        }
+       
+      });
+
+    return playerView;
+
+  });

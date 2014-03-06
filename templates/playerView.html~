@@ -1,0 +1,11 @@
+<div id="content" name="content" align="center"  width="100%">
+	<video id="video_player" class="video_player" controls="" ondblclick="" style="margin-top:10px; z-index:99;" poster="" preload="true">
+		<source src="{{urls[0].url}}" type="video/{{urls[0].ext}}"></source>
+	</video>
+</div>
+<ul id="formats" name="formats">
+{{#urls:i}}
+  <li id="{{url}}">Item {{i}}: {{ext}} <a href="#">{{format}}</a> </li>
+{{/urls}}
+</ul>
+

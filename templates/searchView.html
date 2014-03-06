@@ -1,0 +1,11 @@
+  <div id="search_div" class="search_div" name="search_div" >
+	<div style="">
+		<input id="query_field" name="query_field" class="url_field" type="text" value="Search or Enter youtube link video" onfocus="document.getElementById('search_div').scrollIntoView(true); if(this.value == 'Search or Enter youtube link video') {this.value=''}" onkeydown="if (event.keyCode == 13) {document.getElementById('search_button').click(); this.blur()}" onkeyup="" />
+	</div>
+	<div>
+		<a class="reset_button" data-role="button" onclick="document.getElementById('url_field').value=''; document.getElementById('url_field').focus();" ></a>
+		<a name="search_button" id="search_button" class="url_button" data-role="button"></a>
+	</div>
+  </div>
+<div id="videoList">
+</div>

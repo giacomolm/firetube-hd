@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+	<meta name="apple-mobile-web-app-capable" content="yes"/>
+	<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+	<meta name="keywords" content="" />
+	<meta name="description" content="" />
+  <title>FireTube HD | Play Youtube Video in HD</title>
+  <link href="./style/style.css" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="./style/autosuggest_inquisitor.css" type="text/css" media="screen" charset="utf-8" />
+
+	<link rel="stylesheet" href="style/style_blue.css" type="text/css" />
+	<link href='https://fonts.googleapis.com/css?family=Ubuntu' rel='stylesheet' type='text/css' />
+	<link href='https://fonts.googleapis.com/css?family=Lobster' rel='stylesheet' type='text/css' />
+	<link rel="shortcut icon" href="img/favicon.ico" />
+	<link rel="stylesheet" href="style/main.css" />
+   
+  
+  <script type="text/javascript"  src="./js/zepto.min.js"></script>
+  <script type="text/javascript"  src="./js/hammer.min.js"></script>
+  <script type="text/javascript">
+
+	var source;
+	var myPlayer;
+	var loader;
+	var searchSP = 1; //Starting Point index
+	var currentQuery; //usato solo nel load more content
+	var currentID; // definita solo all'interno della funzione fetch data
+	var lastID = 0; // definita solo all'interno della funzione fetch data
+	
+	var historyStr="";//usata solo in fetch data
+	
+	//La funzione fa riferimento a quando l'utente torna indietro attraverso il browser
+	window.onpopstate = function(event) { 
+				if(event.state && event.state.str) fetch_data(event.state.str);
+			}
+			
+	
+	var latestViewDim = localStorage.getItem("latestViewDim") | 10; // max dimension of latest video stored
+	
+
+	function fetch_data(str){
+		
+		if(!obj){
+			/*$(window).scroll(function() {
+				if($(window).scrollTop() + $(window).height() >= $(document).height() - $(window).height()*3/4) {
+					//Ricarico dei nuovi risultati se disponibili
+					if((document.getElementById('under_video').style.display == "block")&& (document.getElementById('search_video').style.display == "block") && (currentID)){
+						loadMoreContent();
+					}
+				}
+				if($(window).scrollTop()>= 3*$(window).height()){
+					document.getElementById('dynamic-to-top').style.display = "inline";
+				}
+				else {
+					document.getElementById('dynamic-to-top').style.display = "none";
+				}
+				
+				if($(window).scrollTop()>=48){
+					document.getElementById('search_top').style.display = "inline";
+				}
+				else {
+					document.getElementById('search_top').style.display = "none";
+				}
+				
+			});*/
+		}
+		
+		//loader visibile mentre vengono caricate le informazioni
+		loader = document.getElementById('loader');
+		setElementCentral(loader);
+		loader.style.display = 'block';
+		
+		document.getElementById('suggest_div').style.display = "none";
+		
+		//rendo disponibili il div under video sottostante al video_player
+		showUnderVideo();
+		
+		//resetto la lunghezza dei suggerimenti alla taglia iniziale
+		//resetContLenght();
+		
+		$.support.cors = true;
+		//str = 'http://www.youtube.com/get_video_info?video_id=yyDUC1LUXSU&alt=jsonc&eurl=http://localhost:8080/video-js/test.html';
+		if(str.substring(0,4)=="http" || str.substring(0,3)=="www"){
+			//inizializzo la variabile result
+			result = false;
+	
+			var regExp = /.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?]*).*/;
+			var match = str.match(regExp);
+			//match[1] = 'yyDUC1LUXSU';
+			if (match&&match[1].length==11){
+				//abilito i source button
+				document.getElementById('source_button').style.display = "block";
+				currentID = match[1];
+
+				//$.support.cors = true;
+				//$.get('http://www.youtube.com/get_video_info?video_id='+match[1]+'&eurl=http%3A%2F%2Flocalhost%3A8080%2Fvideo-js%2Fdemo.html&el=embedded&hl=en_US&width=640&height=385&callback=?', function(data) {    
+				var oReq = new XMLHttpRequest({ mozSystem: true });
+				oReq.onload = function() {    
+			
+					data = this.responseText;
+					result = display(data, match[1]);
+					//comportamento aggressivo -> forzo a ripetere la query se la richiesta in ajax non e andata a buon fine (result == false) e l'ultimo id memorizzato e diverso dall'ID corrente
+					if(!result && currentID != lastID) {
+						//fetch_data(str);
+					}
+					else {
+						loader.style.display = 'none';
+						//se il il collegamento e diverso da quello appena memorizzato, lo memorizzo
+						if(historyStr != str) {
+							historyStr = str;
+							history.pushState({str : str}, str,null);
+						}
+						//Pericoloso
+						lastID = currentID;
+					}
+				
+				}//).fail(function(data, ts) { alert(data.status); });
+				oReq.open("get", 'http://www.youtube.com/watch?client=mv-google&hl=it&gl=GB&v='+match[1]+'&nomobile=1', true);
+				//oReq.open("get", 'http://www.youtube.com/get_video_info?video_id='+match[1]+'&eurl=http://localhost:8080/video-js/test.html', true);
+				oReq.send();
+			}	
+			else{
+				search_video("youtube.com/watch?v="+(str.substr(str.search("&v=")+3,11)), "");
+				result = true;
+			}
+			
+		} 
+		else search_video(str,"");
+		
+	}
+
+	var obj;
+	var sourceWMV,sourceWEBM, sourceSWF;
+	
+	function addPlayer(){
+		vp = document.createElement("VIDEO");
+		vp.setAttribute('id','video_player');//id="video_player" class="video_player" width="100%" controls ondblclick="fullscreen()" onclick="stop_pause()"
+		vp.setAttribute('class','video_player');
+		vp.setAttribute('width','100%');
+		vp.setAttribute('controls','true');
+		vp.setAttribute('ondblclick','fullscreen()');
+		vp.setAttribute('onclick','stop_pause()');
+		document.getElementById('content').appendChild(vp);
+		//alert(sourceWMV==undefined);
+		//sourceWMV=sourceWEBM=sourceSWF=undefined;
+		return vp;
+	}
+	
+	var foundArray;
+
+	function display(results, id){
+		filled = false; 
+		j=0;
+		
+		matches = results.match(/stream_map\":(.[^&]*?)(?:\\\\|&)/i);
+		//ci sono stati degli errori nella funzione match
+		if(matches== null || matches[1]==null) return false;
+		//fmt_url = decodeURIComponent(matches[1]); //occhio al replace
+	
+		urls = matches[1].split(',');
+		
+		foundArray = new Array();
+
+		for(i=0; i<11; i++){
+			urls[i] = decodeURIComponent(urls[i]);
+			console.log('first '+urls[i]);
+			tm=urls[i].match(/itag=([0-9]+)/);
+			si=urls[i].match(/sig=([0-Z]*.[0-Z]*)/);
+			
+			if (!si) {
+				r=urls[i].match(/signature=([0-Z]*.[0-Z]*)/);
+				if(r && tm){
+					si = new Array();
+					console.log('length of key '+r[1].length);
+					si[1] = k(r[1]);
+					console.log(tm[1]+'\nr '+r[1]+' \ns '+si[1]);
+				}
+			}
+			um=urls[i].match(/url=(.*?)\\u/);
+			
+			if( tm && si!=null && um!=null){
+				u = decodeURIComponent(um[1]);
+				console.log('url '+u.concat("&signature=").concat(si[1]));
+				foundArray[tm[1]] = (u.concat("&signature=")).concat(si[1]);
+			}					
+		}
+		//alert(foundArray[43]);
+		if(foundArray[43]!=undefined){
+			filled = true;
+			j=18;
+		}
+		
+		obj = document.getElementById('video_player');
+		obj.addEventListener('loadeddata', setRightTime, false);
+		
+		if(filled){
+			obj.setAttribute('poster', 'http://img.youtube.com/vi/'+id+'/hqdefault.jpg');
+			//after a new search, clean the previous related must be cleaned
+
+			//controllo se e già presente
+			if(!inLatest(id)){
+				//shift
+				shiftLatest();
+				localStorage.setItem( 0, id);
+			}
+			else shiftLatestUntil(id);
+			
+			related_video(id,"");
+			display_related();
+			if(sourceWMV) {
+				$(sourceWMV).attr('type', 'video/mp4');
+				$(sourceWMV).attr('src', foundArray[18]);
+			}
+			else{
+				sourceWMV = document.createElement('source');
+				$(sourceWMV).attr('type', 'video/mp4');
+				$(sourceWMV).attr('src', foundArray[18]);
+				obj.appendChild(sourceWMV);
+			}
+			
+			if(sourceWEBM){
+				$(sourceWEBM).attr('type', 'video/webm');
+				$(sourceWEBM).attr('src', foundArray[43]);
+			}
+			else{
+				sourceWEBM = document.createElement('source');
+				$(sourceWEBM).attr('type', 'video/webm');
+				$(sourceWEBM).attr('src', foundArray[43]);
+				obj.appendChild(sourceWEBM);
+			}
+
+			if(sourceSWF){
+				$(sourceSWF).attr('src', foundArray[34]);
+			}
+			else{
+				sourceSWF = document.createElement('embed');
+				$(sourceSWF).attr('src', foundArray[34]);
+				obj.appendChild(sourceSWF);
+			}
+		
+			/*for(i=urls.length-1; i>0; i--){
+				source[i] = document.createElement('source');
+				$(source[i]).attr('src', foundArray[i]);
+				obj.appendChild(source[i]);
+			}*/
+		
+			document.getElementById('button360').setAttribute("class","button_pressed");
+			document.getElementById('button720').setAttribute("class","button_released");
+			document.getElementById('button1080').setAttribute("class","button_released");
+			if(foundArray[22]==undefined) document.getElementById('button720').style.display="none";
+			else document.getElementById('button720').style.display="block";
+			if(foundArray[37]==undefined) document.getElementById('button1080').style.display="none";
+			else document.getElementById('button1080').style.display="block";
+			
+			//alert();
+			window.scrollTo(0,document.getElementById('content').offsetTop-document.getElementById('top-page').offsetHeight-20);
+			
+			currTime = 0;
+			
+			obj.load();
+			//Fill video info
+			$.getJSON('http://gdata.youtube.com/feeds/api/videos/'+id+'?v=2&alt=json', function(data) {
+				document.getElementById('video_info').innerHTML='';
+				var entry = data.entry;
+				var title = entry.title.$t;
+				var author = entry.author[0].name.$t;
+				var viewcount;
+				if(entry.yt$statistics!=undefined)	viewcount=  entry.yt$statistics.viewCount;
+				
+				//definisco il div che verra collegato alla fine al div video_info
+				content_div = document.createElement("DIV");
+				var textH3= document.createElement("H3");
+				textH3.innerHTML = title;
+				content_div.appendChild(textH3);
+				
+				var authorH4= document.createElement("H5");
+				var authorA = document.createElement("A");
+				authorA.setAttribute("href","#under_video");
+				authorA.setAttribute("onclick","search_channel('"+entry.author[0].uri.$t.substr(entry.author[0].uri.$t.lastIndexOf("/")+1)+"','"+author+"')");
+				authorA.setAttribute("style","color : #0053a6; text-decoration : none");
+				authorA.innerHTML = author;
+				authorH4.appendChild(authorA);
+				content_div.appendChild(authorH4);
+				 
+				var viewcountH6 =  document.createElement("H6");
+				var viewcountMod = "";
+				
+				for(s=viewcount.length-1; s>=0; s--){
+					viewcountMod = viewcount[s] + viewcountMod;
+					if(s!=0 && viewcount.length-1!=s && ((viewcount.length-s)%3 == 0)) viewcountMod = "."+viewcountMod;
+				}
+				viewcountH6.innerHTML = "Views: "+viewcountMod;
+				content_div.appendChild(viewcountH6);
+				//collego il div creato 
+				document.getElementById('video_info').appendChild(content_div);
+				
+			});
+
+			//Imposto l'ultimo ID letto che e andato a buon fine --> variabile globale.
+			//lastID = id;
+			
+			//Per sicurezza (motivi di tempo)
+			loader.style.display = 'none';
+			return true;
+		}
+		else return false;
+		/*
+		$typeMap[13] = array("13", "3GP", "Low Quality - 176x144");
+		$typeMap[17] = array("17", "3GP", "Medium Quality - 176x144");
+		$typeMap[36] = array("36", "3GP", "High Quality - 320x240");
+		$typeMap[5]  = array("5", "FLV", "Low Quality - 400x226");
+		$typeMap[6]  = array("6", "FLV", "Medium Quality - 640x360");
+		$typeMap[34] = array("34", "FLV", "Medium Quality - 640x360");
+		$typeMap[35] = array("35", "FLV", "High Quality - 854x480");
+		$typeMap[43] = array("43", "WEBM", "Low Quality - 640x360");
+		$typeMap[44] = array("44", "WEBM", "Medium Quality - 854x480");
+		$typeMap[45] = array("45", "WEBM", "High Quality - 1280x720");
+		$typeMap[18] = array("18", "MP4", "Medium Quality - 480x360");<
+		$typeMap[22] = array("22", "MP4", "High Quality - 1280x720");
+		$typeMap[37] = array("37", "MP4", "High Quality - 1920x1080");
+		$typeMap[33] = array("38", "MP4", "High Quality - 4096x230");
+		*/
+	}
+	
+	var interval, currTime;
+	function switchSource(id){
+		if(obj){
+			document.getElementById('video_player').pause();
+			currTime = document.getElementById('video_player').currentTime | 0;
+			if(id=='sq'){
+			
+				document.getElementById('button360').setAttribute("class","button_pressed");
+				document.getElementById('button720').setAttribute("class","button_released");
+				document.getElementById('button1080').setAttribute("class","button_released");
+				$(sourceWMV).attr('src', foundArray[18]);
+				$(sourceWEBM).attr('src', foundArray[43]);
+				$(sourceSWF).attr('src', foundArray[6]);
+			}
+			else if(id=='hq'){
+				document.getElementById('button720').setAttribute("class","button_pressed");
+				document.getElementById('button360').setAttribute("class","button_released");
+				document.getElementById('button1080').setAttribute("class","button_released");
+				$(sourceWMV).attr('src', foundArray[22]);
+				$(sourceWEBM).attr('src', foundArray[44]);
+				$(sourceSWF).attr('src', foundArray[34]);	
+			}
+			else if(id=='hd'){
+				document.getElementById('button1080').setAttribute("class","button_pressed");
+				document.getElementById('button720').setAttribute("class","button_released");
+				document.getElementById('button360').setAttribute("class","button_released");
+				$(sourceWMV).attr('src', foundArray[37]);
+				$(sourceWEBM).attr('src', foundArray[45]);
+				$(sourceSWF).attr('src', foundArray[35]);	
+			}
+			
+			document.getElementById('video_player').load();
+			
+			/*setTimeout(function(){ 
+							//alert(obj.currentTime);
+							obj = document.getElementById('video_player');
+							if(obj.currentTime==0 && currTime>0)
+								obj.currentTime=currTime; 
+							obj.play();							
+						}  
+			
+				     ,1000);*/
+		}
+	}
+	
+	var limit = 0;
+	function setRightTime(){
+		if(obj.currentTime == 0 && currTime>0) obj.currentTime=currTime;
+		obj.play();
+	}
+	
+	function resizeBody(){
+	
+		bar = document.getElementById('top-page');
+		barSize = bar.offsetHeight;
+		bar.width = $(window).width();
+		lastW = $(window).width();
+	
+		if($(window).height() >= $(window).width())
+			{
+				bar.style.position="fixed";
+				document.getElementById('search_div').style.paddingTop = "80px";
+				document.getElementById('video_player').width =$(window).width()*98/100;
+				document.getElementById('video_player').style.height = "auto";
+			}
+			
+		else   {
+			lastW = document.getElementById('video_player').width;
+			bar.style.position="static";
+			document.getElementById('search_div').style.paddingTop = "0px";
+			document.getElementById('video_player').style.height =$(window).height();
+			document.getElementById('video_player').width =$(window).width();
+			if(lastW != $(window).width()) window.scrollTo(0,document.getElementById('video_player').offsetTop);
+		}
+	}
+	
+	function stop_pause(){
+		if(obj){
+			if(obj.paused){
+				obj.play();
+			}
+			else obj.pause();
+		}
+	}
+	
+	function fullscreen(obj){
+
+		if(obj){
+			obj.mozRequestFullScreen();
+			if (!document.fullscreenElement &&    // alternative standard method
+			      !document.mozFullScreenElement && !document.webkitFullscreenElement) {  // current working methods
+			    if (document.documentElement.requestFullscreen) {
+			      document.documentElement.requestFullscreen();
+			    } else if (document.documentElement.mozRequestFullScreen) {
+				obj.mozRequestFullScreen();
+			    } else if (document.documentElement.webkitRequestFullscreen) {
+			      obj.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+			    }
+			    // non funziona bene su opera mobile
+			    //obj.play();
+			} else {
+			    if (document.cancelFullScreen) {
+			      document.cancelFullScreen();
+			    } else if (document.mozCancelFullScreen) {
+			      document.mozCancelFullScreen();
+			    } else if (document.webkitCancelFullScreen) {
+			      odocument.webkitCancelFullScreen();
+			    }
+			    //obj.pause();
+			}
+		}
+	}
+	
+	function parse_feed(entries, container){
+	
+		tempDiv = document.createElement("DIV");
+		for (var i = 0; i < entries.length; i++) {
+		    var entry = entries[i];
+		    var title = entry.title.$t;
+		    var link = entry.link[0].href;
+		    var author = entry.author[0].name.$t;
+		    var thumbnail = entry.media$group.media$thumbnail[0].url;
+		    var duration = 0;
+		    if(entry.media$group.media$content)
+			duration = entry.media$group.media$content[0].duration;
+		    var seconds = (duration % 60<10)? '0'+duration % 60 : duration % 60;
+		    var time = Math.floor(duration / 60) +":"+ seconds;
+		    //qualche volta possono esserci degli errori sul fatto che il viewcount non e definito
+		    var published =  new Date(entry.published.$t);
+		    var hd = entry.yt$hd;
+	
+		    videodiv = document.createElement("DIV");
+		    videodiv.setAttribute('style', 'clear:left; padding-top : 3px');
+		    videodiv.setAttribute('class', 'link_list_item  link_list_item_gray');
+		    videodiv.setAttribute('onClick', "fetch_data('"+link+"')");
+		    videodiv.setAttribute('style','overflow-x:auto; white-space: nowrap; vertical-align:middle');
+		    
+		    var imglink = document.createElement("IMG");
+		    imglink.setAttribute('onClick', "fetch_data('"+link+"')");
+		    imglink.setAttribute('src', thumbnail);
+		    imglink.setAttribute('width', '120px');
+		    imglink.setAttribute('style', 'cursor:pointer; float:left;');
+		    videodiv.appendChild(imglink);
+		    
+		    var textlink = document.createElement("P");
+		    textlink.setAttribute('onClick', "fetch_data('"+link+"')");
+		    textlink.setAttribute('class', 'link_list_item_title');
+		    textlink.setAttribute('style','margin-right : 5px; white-space: nowrap;color: #333; font-size: 14.2px; font-weight: bold; margin-bottom: 5px;');
+		    //textlink.setAttribute('alt', title);
+		    //if(title.length>27) title = title.substring(0,27)+"..";
+		    textlink.innerHTML= title;
+		    videodiv.appendChild(textlink);
+		    
+		    var info_div = document.createElement("DIV");
+		    info_div.setAttribute("style", "margin-top : -0.8em; font-size: 13px; line-height:1.7 ");
+		    
+		    authotText = document.createElement("DIV");
+		    authorSpan =document.createElement("SPAN");
+		    authorSpan.setAttribute("style", "font-size:12px; margin-top:-0.4em; display:inline-block; ");
+		    authorSpan.setAttribute("onclick", "search_channel('"+entry.author[0].uri.$t.substr(entry.author[0].uri.$t.lastIndexOf("/")+1)+"','"+author+"')");
+		    authorSpan.innerHTML = author;
+		    authotText.appendChild(authorSpan);
+		     authotText.setAttribute("style", "color: #0053a6");
+		    info_div.appendChild( authotText);
+		    
+		    timeText = document.createTextNode(time);
+		    info_div.appendChild(timeText); 
+		    if(hd!=undefined){
+			    hdDIV = document.createElement("DIV");
+			    hdDIV.setAttribute("class", "badge-line");
+			    hdText = document.createTextNode("HD");
+			    hdDIV.appendChild(hdText); 
+			    info_div.appendChild(hdDIV); 
+		    }
+		    br2 = document.createElement("BR");
+		    info_div.appendChild(br2);
+		    //infos = document.createTextNode("Date: "+(published.getDay()+1)+"/"+(published.getMonth()+1)+"/"+published.getFullYear());
+		    //info_div.appendChild(infos);
+		    
+		    videodiv.appendChild(info_div); 
+		    tempDiv.appendChild(videodiv);
+		}
+		//alla fine appendo l'insieme dei risultati al container
+		 document.getElementById(container).appendChild(tempDiv);
+	}
+	
+	function related_video(id,inner){
+		if (inner==""){
+			loader.style.display = 'block';
+			//resetContLenght();
+		}
+		
+		//Se ho caricato almeno un video nel player, allora posso procedere con la ricerca di video correlati
+		//if(lastID!=0){
+			$.support.cors = true;
+			$.getJSON('https://gdata.youtube.com/feeds/api/videos/'+id+'/related?v=2&start-index=1&max-results=20&alt=json', function(data) {
+					var feed = data.feed;
+					var entries = feed.entry || [];
+					document.getElementById('related_video').innerHTML = inner;
+					parse_feed(entries, 'related_video');
+					display_related();
+					loader.style.display = 'none';
+					if(loaderContGif) loaderContGif.style.display = 'none';
+				});
+		//}
+	}
+	
+	var ajax_ip;//attenzione però in questo modo la variabile e globale
+	function search_video(query, inner){
+		//var ajax_ip;
+		showUnderVideo();
+		//if(ajax_ip==undefined) ajax_ip = false;
+		if(searchSP==undefined) searchSP=1;
+		
+		if(query=='') alert('Request Incorrect');
+		else{
+			//se  l'inner e vuoto, significa che sto mostrando i risultati della search dopo che questi siano stati nascosti, OPPURE sto effettuando una nuova ricerca
+			if (inner==''){
+				if(loader!=undefined) loader.style.display = 'block';
+				searchSP = 1;
+				//alert(query.substr(0,8)=="&author=");
+				if(query.substr(0,8)!="&author=") document.getElementById('sh_string').innerHTML = "Search Results";
+				
+			}
+			//mi memorizza la  query corrente su una variabili
+			loadMoreContent(query);
+			
+			//necessarie per il funzionamento con IE
+			$.support.cors = true;
+			
+			/* VERSIONE PER I CASI IN CUI NON e SUPPORTATO IL GETjSON DI JQUERY -- CASI MOLTO REMOTI*/
+			if(!ajax_ip){
+				ajax_ip = true;
+				$.ajax({
+					dataType: "json",
+					url: 'http://gdata.youtube.com/feeds/api/videos?alt=json&start-index='+searchSP+'&max-results=4&q='+query,
+					success: function(data) {
+						ajax_ip=false;
+						var feed = data.feed;
+						var entries = feed.entry || [];
+						searchSP+=5;
+						document.getElementById('search_video').innerHTML = inner;//<input id='search_field' class='search_field' type='text'  onkeydown=\"if (event.keyCode == 13) document.getElementById('btnSearch').click()\"> <input type='button' id='btnSearch' value='Send' onclick=search_video(document.getElementById('search_field').value, \'\')> <br>Results:";
+						parse_feed(entries, 'search_video');
+						display_search();
+						if(loaderContGif) { loaderContGif.style.display = 'none';}
+						
+						loader.style.display = 'none';
+						
+						// non voglio fare più scroll se la ricerca non ha dato esito
+						if(entries.length>0)
+							if (inner=="") window.scrollTo(0,document.getElementById('under_video').offsetTop-document.getElementById('top-page').offsetHeight-20);//location.hash="#under_video"//$('html, body').animate({ scrollTop: $('#under_video').offset().top }, 'fast');
+						else loaderContGif.style.display = 'none';
+					}
+				});
+
+			}
+			/*request = 'http://gdata.youtube.com/feeds/api/videos?alt=json&start-index='+searchSP+'&max-results=4&q='+query;
+			
+			$.getJSON(request, function(data) {
+				searchSP+=5;
+				
+				var feed = data.feed;
+				var entries = feed.entry || [];
+				document.getElementById('search_video').innerHTML = inner;//<input id='search_field' class='search_field' type='text'  onkeydown=\"if (event.keyCode == 13) document.getElementById('btnSearch').click()\"> <input type='button' id='btnSearch' value='Send' onclick=search_video(document.getElementById('search_field').value, \'\')> <br>Results:";
+				parse_feed(entries, 'search_video');
+				display_search();
+				if(loaderContGif) { loaderContGif.style.display = 'none';}
+				
+				if(loader!=undefined) loader.style.display = 'none';
+				
+				// non voglio fare più scroll se la ricerca non ha dato esito
+				if(entries.length>0)
+					if (inner=="") $('html, body').animate({ scrollTop: $('#under_video').offset().top }, 'fast');
+				else loaderContGif.style.display = 'none';
+				
+				
+			*/
+		}
+	}
+	
+	function search_channel(name, alias){
+
+		hackQuery = '&author='+name;
+		display_search();
+		document.getElementById('sh_string').innerHTML = alias;
+		search_video(hackQuery, '');
+	}
+	
+	function display_related(){
+		document.getElementById('related_video').style.display = 'block';
+		document.getElementById('search_head').setAttribute("class","head_blur");
+		document.getElementById('related_head').setAttribute("class","head_focus");
+		//document.getElementById('related_head').style.textDecoration = 'underline';
+		document.getElementById('search_video').style.display = 'none';
+	}
+	function display_search(){
+		document.getElementById('search_video').style.display = 'block';
+		document.getElementById('search_head').setAttribute("class","head_focus");
+		document.getElementById('related_head').setAttribute("class","head_blur");
+		//document.getElementById('search_head').style.textDecoration = 'underline';
+		document.getElementById('related_video').style.display = 'none';
+	}
+	
+	function  display_latest(){
+		document.getElementById('latest_video').style.display = 'block';
+		document.getElementById('latest_head').setAttribute("class","head_focus");
+		document.getElementById('popular_head').setAttribute("class","head_blur");
+		//document.getElementById('search_head').style.textDecoration = 'underline';
+		document.getElementById('popular_video').style.display = 'none';
+	}
+	
+	function  display_popular(){
+		document.getElementById('latest_video').style.display = 'none';
+		document.getElementById('latest_head').setAttribute("class","head_blur");
+		document.getElementById('popular_head').setAttribute("class","head_focus");
+		//document.getElementById('search_head').style.textDecoration = 'underline';
+		document.getElementById('popular_video').style.display = 'block';
+	}
+	
+	var winW, winH;
+	function setElementCentral(element){
+		//var winW, winH;
+		if (document.body && document.body.offsetWidth) {
+		 winW = document.body.offsetWidth;
+		 winH = document.body.offsetHeight;
+		}
+		if (document.compatMode=='CSS1Compat' &&
+		    document.documentElement &&
+		    document.documentElement.offsetWidth ) {
+		 winW = document.documentElement.offsetWidth;
+		 winH = document.documentElement.offsetHeight;
+		}
+		if (window.innerWidth && window.innerHeight) {
+		 winW = window.innerWidth;
+		 winH = window.innerHeight;
+		}
+		var scrollTop = document.body.scrollTop || document.documentElement.scrollTop;
+		//alert(element.width/2);
+		element.style.left = (winW/2 - element.width/2)+"px" ;
+		element.style.top = (scrollTop+winH/2 - element.height/2)+"px";
+	}
+
+	var loaderContGif;
+	function loadMoreContent(query){
+		if(query!=undefined) currentQuery = query;
+		else if(currentQuery!=undefined){
+			loaderContGif = document.getElementById('loaderContent');
+			loaderContGif.style.position = "relative";
+			loaderContGif.style.left = (winW/2 - loaderContGif.width/2)+"px";
+			//searchSP+=5;
+			
+			/*
+			if(document.getElementById('related_video').style.display=='block'){
+				//stiamo trattando dei related
+				//alert(lastID);
+				if(lastID!=0) loaderContGif.style.display = 'block';
+				related_video(currentID,document.getElementById('related_video').innerHTML);
+			}
+			else{ */
+				loaderContGif.style.display = 'block';
+				search_video(currentQuery, document.getElementById('search_video').innerHTML);
+			//}
+		}
+	}
+	
+	
+	function loadSuggest(query){
+		if(query!=""){
+			centerSuggestDiv(document.getElementById('suggest_div'));
+			
+			document.getElementById('search_div').scrollIntoView(true);
+			
+			/*$.get("http://suggestqueries.google.com/complete/search?callback=?",
+					{ 
+					  "hl":"en", // Language
+					  "ds":"yt", // Restrict lookup to youtube
+					  "q":query, // query term
+					  "client":"youtube" // force youtube style response, i.e. jsonp
+					},
+				function(data) {
+					/*var feed = data.feed;
+					var entries = feed.entry || [];
+					if(data[1].length>0){
+						//alert(ul);
+						
+						ul = document.createElement("UL");
+						document.getElementById('ul_suggest_div').innerHTML = "";//<input id='search_field' class='search_field' type='text'  onkeydown=\"if (event.keyCode == 13) document.getElementById('btnSearch').click()\"> <input type='button' id='btnSearch' value='Send' onclick=search_video(document.getElementById('search_field').value, \'\')> <br>Results:";
+						
+						for(i=0; i<data[1].length&&i<3; i++){
+						
+							title = data[1][i][0];
+							
+							link_sugg = document.createElement("A");
+							link_sugg.setAttribute('onClick', "fetch_data('"+addslashes(title)+"'); document.getElementById('url_field').value='"+title+"';");
+							link_sugg.setAttribute('href', "#content");
+							link_sugg.setAttribute('style', 'cursor:pointer;');
+							
+							span_sugg = document.createElement("SPAN");
+							title_sugg = document.createTextNode(title);
+							span_sugg.appendChild(title_sugg);
+							link_sugg.appendChild(span_sugg);
+							
+							li_sugg = document.createElement("LI");
+							li_sugg.setAttribute('style', 'cursor:pointer;');
+							li_sugg.appendChild(link_sugg);
+							ul.appendChild(li_sugg);
+							if(i < 2 && i+1<data[1].length) ul.appendChild(document.createElement("HR"));
+						}
+						document.getElementById('ul_suggest_div').appendChild(ul);
+						document.getElementById('suggest_div').style.display = "block";
+					}
+					else document.getElementById('suggest_div').style.display = "none";
+					
+					// non voglio fare più scroll se la ricerca non ha dato esito
+				});*/
+		}
+	}
+	
+	function centerSuggestDiv(elem){
+		url_field = document.getElementById('url_field');
+		elem.style.left = url_field.offsetLeft;
+	}
+	
+	function addslashes (str) {
+	  // http://kevin.vanzonneveld.net
+	  // +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+	  // +   improved by: Ates Goral (http://magnetiq.com)
+	  // +   improved by: marrtins
+	  // +   improved by: Nate
+	  // +   improved by: Onno Marsman
+	  // +   input by: Denny Wardhana
+	  // +   improved by: Brett Zamir (http://brett-zamir.me)
+	  // +   improved by: Oskar Larsson Högfeldt (http://oskar-lh.name/)
+	  // *     example 1: addslashes("kevin's birthday");
+	  // *     returns 1: 'kevin\'s birthday'
+	  return (str + '').replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
+	}
+
+	function search_focus(){
+		location.hash = "#search_div";
+		document.getElementById('url_field').focus();
+		
+	}
+	
+	function latestVideos(){
+	
+		showLocalVideos();
+		display_latest();
+		document.getElementById('latest_video').innerHTML = "";
+		
+		for(i=0; i<latestViewDim; i++){
+		
+			if(localStorage.getItem(i)!=null){
+				$.getJSON("https://gdata.youtube.com/feeds/api/videos/"+localStorage.getItem(i)+"?alt=json",  function(data) { 
+					var feed = data;
+					var entries = new Array();
+					entries[0] = feed.entry || [];
+					parse_feed(entries, 'latest_video');
+					//display_search();
+					if(loaderContGif) { loaderContGif.style.display = 'none';}
+					
+					// non voglio fare più scroll se la ricerca non ha dato esito
+					//if(entries.length>0)
+					//	if (inner=="") $('html, body').animate({ scrollTop: $('#under_video').offset().top }, 'fast');
+					//else loaderContGif.style.display = 'none';
+					
+				});
+			}
+		}
+	}
+	
+	function inLatest(id){
+		for(i=0; i<latestViewDim; i++){
+			if(localStorage.getItem(i)!=null && localStorage.getItem(i)==id)  return true;
+		}
+		return false;
+	}
+	
+	function shiftLatest(){
+		for(i=latestViewDim-1; i>0; i--){
+			if(localStorage.getItem(i-1)!=null)
+				localStorage.setItem( i, localStorage.getItem(i-1));
+		}
+	}
+	
+	function shiftLatestUntil(id){
+		trovato = false;
+		pos=-1;
+		for(i=0; i<latestViewDim&&!trovato; i++){
+			if(localStorage.getItem(i)==id){
+				pos = i;
+				trovato = true;
+			}
+		}
+		if(trovato){
+			for(i=pos; i>0; i--){
+				if(localStorage.getItem(i-1)!=null)
+					localStorage.setItem( i, localStorage.getItem(i-1));
+			}
+			localStorage.setItem( 0, id);
+		}
+	}
+	
+	
+	var latestPopDim = 20;
+	function popularVideos(){
+		showLocalVideos();
+		display_popular();
+		document.getElementById('latest_video').innerHTML = "";
+		
+		$.ajax({
+					dataType: "json",
+					url: "https://gdata.youtube.com/feeds/api/standardfeeds/most_popular?alt=json&max-results=7",
+					success: function(data) {
+						var feed = data.feed;
+						var entries = feed.entry || [];
+						parse_feed(entries, 'popular_video');
+						//display_search();
+						if(loaderContGif) { loaderContGif.style.display = 'none';}
+					}
+				});
+		
+		
+		/*$.getJSON("https://gdata.youtube.com/feeds/api/standardfeeds/most_popular?alt=json&max-results=7",  function(data) { 
+					var feed = data.feed;
+					var entries = feed.entry || [];
+					parse_feed(entries, 'popular_video');
+					//display_search();
+					if(loaderContGif) { loaderContGif.style.display = 'none';}
+		});*/
+	}
+	
+	function showLocalVideos(){
+		document.getElementById('under_video').style.display = "none";
+		document.getElementById('local_video').style.display = "block";
+	}
+	
+	function showUnderVideo(){
+		document.getElementById('under_video').style.display = "block";
+		document.getElementById('local_video').style.display = "none";
+	}
+	
+	function whichTransitionEvent(){
+		    var t;
+		    var el = document.createElement('fakeelement');
+		    var transitions = {
+		      'transition':'transitionend',
+		      'OTransition':'oTransitionEnd',
+		      'MozTransition':'transitionend',
+		      'WebkitTransition':'webkitTransitionEnd',
+		      'IE9-' : 'undefined'
+		    }
+
+		    for(t in transitions){
+			if( el.style[t] !== undefined ){
+			    return transitions[t];
+			}
+		    }
+	}
+	
+	function changeMenuRef(element){
+		if (element != undefined) el = element;
+		if(el.offsetWidth==0){
+			setTimeout(function(){ document.getElementById('menu').setAttribute("class","menu");}, 100);
+		}
+		else{
+			setTimeout(function(){ document.getElementById('menu').setAttribute("class","closeMenu");}, 100);
+		}
+	}
+
+	function jsPanelAnimation(){
+		$(document).bind("mobileinit", function () {
+		    $.mobile.pushStateEnabled = true;
+		    menuStatus = false
+		    $('#menu').hide();
+		});
+		 
+		$(function () {
+		    var menuStatus;
+		    var show = function() {
+			if(menuStatus) {
+			    return;
+			}
+			
+			$('#home').animate({
+			    marginLeft: "165px",
+			}, 300, function () {
+			    menuStatus = true;
+			    
+			});
+			
+			$('#menu').show();
+			$('#menu').animate({
+			  width : "165px"
+			}, 300);
+			
+		    };
+		    var hide = function() {
+			if(!menuStatus) {
+			    return;
+			}
+				
+			$('#menu').animate({
+			  width : "0px"
+			}, 300,  function () {
+				 $('#menu').hide();
+			}	
+			);
+			
+			$('#home').animate({
+			    marginLeft: "0px",
+			}, 300, function () {
+			    menuStatus = false
+			});
+		    };
+		    var toggle = function() {
+			if (!menuStatus) {
+			    show();
+			} else {
+			    hide();
+			}
+			return false;
+		    };
+		 
+		    // Show/hide the menu
+		    $("a.showMenu").click(toggle);
+		    //$('#menu, .pages').on("swipeleft", hide);
+		    //$('.pages').on("swiperight", show);
+		 
+		    $('div[data-role="page"]').on('pagebeforeshow', function (event, ui) {
+			menuStatus = false;
+			$(".pages").css("margin-left", "0");
+		    });
+		 
+		    // Menu behaviour
+		    $("#menu li a").click(function () {
+			var p = $(this).parent();
+			p.siblings().removeClass('active');
+			p.addClass('active');
+		    });
+		});
+	}
+	
+		//controllo se ho caricato l'url con il nome della pagina 
+	function refresh_video(){
+		if (window.location.href[window.location.href.length-1]=="/")  window.location += "index.html#reload";
+		else {
+			window.location.href = "index.html#reload";
+			location.reload();
+		}
+		
+	}
+
+	function init(){
+		//se la transition end e supportata
+		var transitionEnd = whichTransitionEvent();
+		if(transitionEnd!=undefined){
+			element = document.getElementById('menu');
+			element.addEventListener(transitionEnd, changeMenuRef(element), false);
+		}
+		else {
+			//IE9 and earlier
+			document.getElementById('menuLogo').setAttribute("class","showMenu");
+			jsPanelAnimation();
+		}
+		
+		Hammer(document.getElementById('container')).on("swipeleft", function() { document.getElementById('menu').setAttribute("class","closeMenu");});
+		popularVideos();
+			$(window).scroll(function() {
+				if($(window).scrollTop() + $(window).height() >= $(document).height() - $(window).height()*3/4) {
+					//Ricarico dei nuovi risultati se disponibili
+					if((document.getElementById('under_video').style.display == "block")&& (document.getElementById('search_video').style.display == "block")){
+						loadMoreContent();
+					}
+				}
+				if($(window).scrollTop()>= 3*$(window).height()){
+					document.getElementById('dynamic-to-top').style.display = "inline";
+				}
+				else {
+					document.getElementById('dynamic-to-top').style.display = "none";
+				}
+				
+				if($(window).scrollTop()>=98){
+					document.getElementById('search_top').style.display = "inline";
+					document.getElementById('right_element').setAttribute("onclick","search_focus()");
+				}
+				else {
+					document.getElementById('search_top').style.display = "none";
+					document.getElementById('right_element').setAttribute("onclick","refresh_video()");
+				}
+				
+			});
+		if((video_id=localStorage.getItem(0))!=null && location.hash=="#reload"){
+			fetch_data("http://http://www.youtube.com/watch?v="+video_id);
+		}
+	}
+
+     function k(r) {
+	var reverse = function(str) {
+		var i,s='';
+		for(i = str.length; i >= 0; i--) {
+		    s+= str.charAt(i);
+		}
+		return s;
+	};
+	if (r.length == 89) {
+		 //return s[84:78:-1] + s[87] + s[77:60:-1] + s[0] + s[59:3:-1]//
+            r = reverse(r.substring(79, 85)) + r.substring(87, 88) + reverse(r.substring(61, 78))+r.substring(0, 1) +reverse(r.substring(4,60));
+        } else {
+		if (r.length == 87) {
+				   //s[83:53:-1] +                  s[3] +                                    s[52:40:-1] +            s[86] +                           s[39:10:-1] +                s[0] +                  s[9:3:-1] +                  s[53] 
+		    r = reverse(r.substring(54, 84)) + r.substring(3, 4) + reverse(r.substring(41, 53))+r.substring(86, 87) +reverse(r.substring(11,40))+ r.substring(0, 1) + reverse(r.substring(4,10))+r.substring(53, 54) 
+		} else {
+		    if (r.length == 86) {
+			//s[5:40] + s[3] + s[41:48] + s[0] + s[49:86]
+			r = r.substring(5,40) +  r.substring(3,4) + r.substring(41,48) + r.substring(0,1)+r.substring(49,86);
+			//s[2:63] + s[82] + s[64:82] + s[63]
+		    } else {
+			if (r.length == 85) {
+			    var q = r.substr(44, 40).split("").reverse().join("");
+			    var p = r.substr(3, 40).split("").reverse().join("");
+			    r = q.substr(7, 1) + q.substr(1, 6) + q.substr(0, 1) + q.substr(8, 15) + r.substr(0, 1) + q.substr(24, 9) + r.substr(1, 1) + q.substr(34, 6) + r.substr(43, 1) + p
+			} else {
+			    if (r.length == 84) {
+				//s[83:27:-1] + s[0] + s[26:5:-1] + s[2:0:-1] + s[27] 
+				//var q = r.substr(44, 40).split("").reverse().join("");
+				//var p = r.substr(3, 40).split("").reverse().join("");
+				r = reverse(r.substring(28, 84)) + r.substring(0, 1) + reverse(r.substring(6, 27))+reverse(r.substring(1,3))+ r.substring(27,28)			
+			    } else {
+				if (r.length == 83) {
+				    //var q = r.substr(43, 40).split("").reverse().join("");
+				    //var p = r.substr(2, 40).split("").reverse().join("");
+				    //s[6] + s[3:6] + s[33] + s[7:24] + s[0] + s[25:33] + s[53] + s[34:53] + s[24] + s[54:]
+				    r = r.substring(6,7) + r.substring(3,6) + r.substring(33,34)+r.substring(7,24) + r.substring(0,1) + r.substring(25,33) + r.substring(53,54) + r.substring(34,53) + r.substring(24,25) + r.substring(54, 83);
+				    console.log('r '+r);
+				} else {
+				    if (r.length == 82) {
+					var q = r.substr(34, 48).split("").reverse().join("");
+					var p = r.substr(0, 33).split("").reverse().join("");
+					r = q.substr(45, 1) + q.substr(2, 12) + q.substr(0, 1) + q.substr(15, 26) + r.substr(33, 1) + q.substr(42, 1) + q.substr(43, 1) + q.substr(44, 1) + q.substr(41, 1) + q.substr(46, 1) + p.substr(32, 1) + q.substr(14, 1) + p.substr(0, 32) + q.substr(47, 1)
+				    }
+				    else{
+					  if (r.length == 81)
+					  r = r.substring(56,57) + reverse(r.substring(57, 80))+r.substring(41,42)+reverse(r.substring(42, 56))+ r.substring(80,81)+  reverse(r.substring(35, 41))+r.substring(0,1)+ reverse(r.substring(30, 34))+r.substring(34,35)+reverse(r.substring(10, 29))+r.substring(29,30)+reverse(r.substring(1,9))+r.substring(9,10);
+					//return s[56] + s[79:56:-1] + s[41] + s[55:41:-1] + s[80] + s[40:34:-1] + s[0] + s[33:29:-1] + s[34] + s[28:9:-1] + s[29] + s[8:0:-1] + s[9]
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	}
+        return r
+    }
+ </script>
+
+</head>
+<body onresize="resizeBody()" onload="init()" id="container">
+
+	<div id="menu" class="menu" style="position:fixed; top:0px">
+		    <ul style="list-style-type:none">
+			<li><div class="contentLink showMenu" onclick="location.href='./index.html'"> <img src="./img/home.png" style="float:left; margin: 5px; margin-right:7px"> Home </div></li>
+			<li><div class="contentLink showMenu" onclick="search_focus(); "><img src="./img/search_btn.png" style="float:left; margin: 5px; "> Search </div></li>
+			<li><div class="contentLink showMenu" onclick="latestVideos(); changeMenuRef(document.getElementById('menu')); window.scrollTo(0,document.getElementById('videos').offsetTop - document.getElementById('top-page').offsetHeight-20)"><img src="./img/latest.png" style="float:left; margin: 5px; "> Last Watched </div></li>
+			<li><div class="contentLink showMenu" onclick="popularVideos(); changeMenuRef(document.getElementById('menu')); window.scrollTo(0,document.getElementById('videos').offsetTop - document.getElementById('top-page').offsetHeight-20)"><img src="./img/popular.png" style="float:left; margin: 5px;">Popular</div></li>
+			<li><div class="contentLink"><img src="./img/favourite.png" style="float:left; margin: 5px;"> Favourite </div></li>
+		    </ul>
+	</div>
+
+	<div data-role="page" class="home" id="home" style="">
+		<div id="top-page" style="width:100%; position:fixed; top:0px; margin-left:0px; z-index:10000;" >
+			      <div id="header">
+				<div style="float:left"><a href="#menu" id="menuLogo" onclick="changeMenuRef()"><img class="menuIco" src="./img/menu.png"></a></div>
+				<div class="setting" style="float:right; width:38px; height:45px;" id="right_element" onclick="refresh_video()">
+					<img id="search_top" style="margin-top:13px; margin-right:6px; display:none; cursor:pointer"  src="./img/search_btn_dark.png">
+					<img id="refresh_top" style="margin-top:11px; margin-right:6px; cursor:pointer"  src="./img/refresh.png">
+				</div>
+				<div id="top">
+				
+					<h1><a href="index.html" title="" style="text-decoration:none; color:#071931">FireTube HD</a></h1>
+				  
+				</div>
+			      </div>
+			  <div class="shadowbox"><img src="img/shadow.png" class="shadow" alt="shadow"></div>
+		</div>
+		
+		  <div id="search_div" class="search_div" name="search" >
+			<div style="min-width:230px; float:left; width:72%; width: -moz-calc(100% - 80px); width: -webkit-calc(100% - 80px); width: calc(100% - 80px);">
+				<input id="url_field" class="url_field" type="text" value="Search or Enter youtube link video" onfocus="document.getElementById('search_div').scrollIntoView(true); if(this.value == 'Search or Enter youtube link video') {this.value=''}" onblur="if(this.value == ''){this.value ='Search or Enter youtube link video'}" onkeydown="if (event.keyCode == 13) {document.getElementById('url_button').click(); this.blur()}" onkeyup="loadSuggest(this.value)">
+			</div>
+			<div style="float:right">
+				<a class="reset_button" data-role="button" onclick="document.getElementById('uurl_field').value=''; document.getElementById('url_field').focus();" ></a>
+				<a class="url_button" data-role="button" onclick="fetch_data(document.getElementById('url_field').value)" id="url_button" ></a>
+			</div>
+		  </div>
+		  
+			<div style="display:none; background-color:#fff; overflow-x:auto; white-space: nowrap" class="autosuggest" id="suggest_div">
+				<div class="as_header" >
+					<div class="as_corner"></div>
+					<div class="as_bar"></div>
+				</div>
+				<div id="ul_suggest_div">
+					
+				</div>
+				<div class="as_footer">
+					<div class="as_corner"></div>
+					<div class="as_bar"></div>
+				</div>
+			</div>
+			
+		  <div>
+			  <div id="content" name="content" align="center">
+				<video id="video_player" class="video_player" width="100%" controls ondblclick="fullscreen(this)"  style="margin-top:10px; z-index:99;" poster="http://657b072aab060d50f8ce-d7abb53cb376b4947d77643d4b4a48d3.r79.cf1.rackcdn.com/31280_iPhone-5-41.jpg" preload="true" > <!--onclick="stop_pause()"-->
+				
+				</video>
+					<!--<div class="yt-lockup2-badges">
+						<ul class="item-badge-line">
+							<li class="item-badge-label ">HD</li>
+						</ul>
+					</div>-->	
+			   			  <div id="video_info" align="left" style="float:left; width:78%; margin:left:10px; min-width:240px; background-color:#FFF">
+						  </div>
+
+						  <div id="source_button" align="right" style="float:right; display:none; width:18%; margin-right:3px; background-color:#FFF" >
+							 <input class="button_pressed" style="float:right; clear:both; margin: 5px 5px 5px 5px" type="button" id="button360" value="360" onclick="switchSource('sq')">
+							 <input class="button_released" style="float:right; clear:both; margin: 5px 5px 5px 5px" type="button" id="button720" value="720" onclick="switchSource('hq')">
+							 <input class="button_released" style="float:right; clear:both; margin: 5px 5px 5px 5px" type="button" id="button1080" value="1080" onclick="switchSource('hd')">
+						  </div>
+			  </div>
+					  
+		    </div>
+		   
+		   <div style="min-width:240px" id="videos" name="videos">
+			   <div id="under_video" name="under_video" style="clear:both; display : none; ">
+				<div id="under_head">
+					<div id="related_head" class="head_blur" style="float:left; width:50%;" onclick="display_related()"><div>Related Videos</div></div>
+					<div id="search_head" class="head_focus"  onclick="display_search()"><div id="sh_string">Search Results</div></div>
+				</div>
+				  <div id="related_video" class="link_list">
+
+				  </div>
+				  <div id="search_video" class="link_list">
+					 <!--Search Video: <input id="search_field" class="search_field" type="text"> <input type="button" id="btnSearch" value="Send" onclick="search_video(document.getElementById('search_field').value)">-->
+				  </div>
+				  <img align="center" src="./img/loader2.gif" id="loaderContent"  style="display:none;" />
+			   </div>
+			   <div id="local_video" name="local_video">
+				<div>
+					<div  id="popular_head" class="head_focus" style="float:left; width:50%;" onclick="popularVideos();">Popular Videos</div>
+					<div  id="latest_head" class="head_blur" style="vertical-align:middle" onclick="latestVideos();">Latest Watched</div>
+				</div>
+				<div id="popular_video" class="link_list">
+
+				  </div>
+				  <div id="latest_video" class="link_list">
+					 
+				  </div>
+			    </div>
+		   </div>
+			   <img src="./img/loader.gif" id="loader" style="display:none; position:absolute; margin:auto"/>
+		      <a id="dynamic-to-top" href="#" style="">
+			<span> </span>
+		      </a>
+		   <div id="footer">
+			<p>
+				&copy; 2013 <a href="http://www.hdeos.com/" title="easyTouch">HDeos</a>
+				<a href="./tos.html">TOS</a>
+			</p>
+		   </div>
+	</div>
+	
+	<iframe width="420" height="345" src="https://www.youtube.com/embed/-e_3Cg9GZFU"></iframe>
+	
+</body>
+</html>
+
