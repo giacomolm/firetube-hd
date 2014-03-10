@@ -12,8 +12,8 @@
 	<link href="./style/style.css" rel="stylesheet" type="text/css">
 	<link rel="stylesheet" href="./style/autosuggest_inquisitor.css" type="text/css" media="screen" charset="utf-8" />
 	<link rel="stylesheet" href="style/style_blue.css" type="text/css" />
-	<link href='https://fonts.googleapis.com/css?family=Ubuntu' rel='stylesheet' type='text/css' />
-	<link href='https://fonts.googleapis.com/css?family=Lobster' rel='stylesheet' type='text/css' />
+	<!--<link href='https://fonts.googleapis.com/css?family=Ubuntu' rel='stylesheet' type='text/css' />
+	<link href='https://fonts.googleapis.com/css?family=Lobster' rel='stylesheet' type='text/css' />-->
 	<link rel="shortcut icon" href="img/favicon.ico" />
 	<link rel="stylesheet" href="style/main.css" />
 	
@@ -22,7 +22,12 @@
 	<script src="js/style.js" type="text/javascript"></script>
    
 	<body onresize="resizeBody()">
-		<a href="index.html">index</a>
+		<ul>
+			<li onclick="Backbone.history.navigate('', {trigger: true})">Index</li>
+		</ul>
+		<div id="content" name="content" align="center"  width="100%">
+			<video id="video_player" class="video_player" controls="" autoplay="true" style="margin-top:10px; z-index:99;" poster="" preload="true" src="" onloadeddata="resizeBody()">><!--type="video/{{urls[0].ext}}">-->	</video>
+		</div>
 		<div id="container">
 		</div>
 	</body>

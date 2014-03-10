@@ -1,15 +1,11 @@
-<div id="content" name="content" align="center"  width="100%">
-	<video id="video_player" class="video_player" controls="" autoplay="true" style="margin-top:10px; z-index:99;" poster="" preload="true" src="{{urls[0].url}}" onloadeddata="resizeBody()">><!--type="video/{{urls[0].ext}}">-->
-	</video>
-</div>
 <div id="under_video">
 	<h3>{{title}}</h3>
 	<h5>Author: {{author}}</h5><!--here the search channel-->
 	<h6>Viewcount: {{viewcount}}</h6>
 </div>
-<ul id="formats" name="formats">
+<select id="formats" name="formats">
 {{#urls:i}}
-  <li id="{{i}}">Item {{i}}: {{ext}} <a href="#">{{format}}</a> </li>
+  <option id="{{i}}" value="{{i}}">Item {{i}}: {{ext}} - {{format}} </option>
 {{/urls}}
-</ul>
+</select>
 

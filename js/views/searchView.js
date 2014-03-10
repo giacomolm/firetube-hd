@@ -1,5 +1,5 @@
-define(["jquery", "underscore", "backbone", "ractive","views/videoItemView","collections/Videos","text!templates/searchView.html"],
-    function ($, _, Backbone, Ractive, videoItemView,Videos,template) {
+define(["jquery", "underscore", "backbone", "ractive","views/videoItemView","collections/Videos","utils","text!templates/searchView.html"],
+    function ($, _, Backbone, Ractive, videoItemView,Videos,Utils,template) {
 
     var searchView = Backbone.View.extend({
 
@@ -11,7 +11,15 @@ define(["jquery", "underscore", "backbone", "ractive","views/videoItemView","col
         },
 	
 	searchVideos: function(callback){
-		Backbone.history.navigate("search/"+document.getElementById('query_field').value, {trigger: true});
+		var query = document.getElementById('query_field').value;
+		if(query && Utils.isALink(query)){
+			//in this case was inserted a link 
+			localStorage.setItem("url", query); 
+			Backbone.history.navigate("watch/https", {trigger: true});
+		}
+		else{
+			Backbone.history.navigate("search/"+query, {trigger: true});
+		}
 	},
 	
         initialize: function () {				

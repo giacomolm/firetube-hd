@@ -4,15 +4,17 @@ define(["jquery", "underscore", "backbone", "ractive", "collections/Videos","uti
     var playerView = Backbone.View.extend({
        
         events : {
-            "touchend #formats li" : "changeFormat",
-	    "mousedown #formats li" : "changeFormat",
+            "change #formats" : "changeFormat",
         },
 	
         initialize: function () {
 		this.collection = new Videos();
 		this.collection.on("completed", this.setVideos, this);
-		Utils.display(this.model, this.collection);
-		this.relatedView = new searchView({collection : (new Videos("related", this.model, 5)), model : this.model});
+		if(!Utils.isALink(this.model)){
+			Utils.display(this.model, this.collection);
+			this.relatedView = new searchView({collection : (new Videos("related", this.model, 5)), model : this.model});
+		}
+		else Utils.displayOnly(localStorage.getItem("url"), this.collection);
 		//this.on("scrollBottom", this.relatedView.trigger("scrollBottom"));
         },
 	
@@ -22,15 +24,18 @@ define(["jquery", "underscore", "backbone", "ractive", "collections/Videos","uti
 	},
        
 	changeFormat: function(ev){
+		var id = (ev.target).value;
 		var temp = this.data.urls[0];
-		this.data.urls[0] = this.data.urls[$(ev.target).attr("id")];
-		this.data.urls[$(ev.target).attr("id")] = temp;
+		this.data.urls[0] = this.data.urls[id];
+		this.data.urls[id] = temp;
+		window.scrollTo(0,0);
 		this.render();
 	},
 
         render: function (eventName) {
+	    Utils.getVideoPlayer().src = this.data.urls[0].url;
             this.template = new Ractive({el : $(this.el), template: template, data: this.data});	    	    
-	    $(this.el).append(this.relatedView.el);
+	    if(this.relatedView) $(this.el).append(this.relatedView.el);
             return this;
         }
        
