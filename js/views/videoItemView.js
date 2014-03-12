@@ -15,13 +15,13 @@ define(["jquery", "underscore", "backbone", "ractive","utils", "text!templates/v
         },
 
 	openVideo : function(){
-		 var id = Utils.fetch_data(this.model.link);
-		 Backbone.history.navigate("watch/"+id, {trigger: true});
+		var id = Utils.fetch_data(this.model.link);
+		Backbone.history.navigate("watch/"+id, {trigger: true});
 	},
 	
         render: function (eventName) {	    
-	    this.template = new Ractive({el : $(this.el), template: template, data : this.model});
-            return this;
+		this.template = new Ractive({el : $(this.el), template: template, data : this.model});
+		return this;
         }
        
       });

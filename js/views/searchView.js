@@ -25,34 +25,23 @@ define(["jquery", "underscore", "backbone", "ractive","views/videoItemView","col
         initialize: function () {				
 		this.startIndex = 5;
 		if(this.collection!=undefined){
-			//this.collection = new Videos("related", this.model, this.startIndex);
-			this.type = "related";
+			this.type = this.model;
+			this.query = this.collection.query;
 			this.collection.on("completed", this.render, this);
-			this.on("scrollBottom", this.scrollBottom);
 		}
-		else if(this.model !=undefined){
-			this.type = "search";
-			this.collection = new Videos(this.type, this.model, this.startIndex);
-			this.collection.on("completed", this.render, this);
-			this.on("scrollBottom", this.scrollBottom);
-		}
-		else{
-			this.collection = new Videos();
-			this.collection.on("completed", this.render, this);
-			this.collection.getPopular();
-		}
+		this.on("scrollBottom", this.scrollBottom);
         },
 	
-	scrollBottom: function(){		
+	scrollBottom: function(){
+		console.log('on scroll');
 		this.startIndex = this.startIndex + 5;
-		this.collection = new Videos(this.type, this.model, this.startIndex);
+		this.collection = new Videos(this.type, this.query, this.startIndex);
 		this.collection.on("completed", this.renderSub, this);
 	},
        
         render: function (eventName) {
            $(this.el).html(template);
-	   //remember the query typed
-	   if(this.model && document.getElementById('query_field')) document.getElementById('query_field').value = this.model;
+	   //if(this.model && document.getElementById('query_field')) document.getElementById('query_field').value = this.model;
            for(i=0;i<this.collection.length-1;i++){		   
                 $(this.el).append(new videoItemView({
                     model : this.collection.get(i)                    

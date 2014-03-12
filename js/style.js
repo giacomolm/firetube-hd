@@ -27,7 +27,7 @@ window.onload = function(){
 	window.onscroll =function(e){
 		var video_player = document.getElementById('video_player');
 		var video_content = document.getElementById('content');
-		if((window.pageYOffset>video_content.offsetTop+video_content.offsetHeight) && (video_player.style.position != "fixed")){
+		if((window.pageYOffset>video_content.offsetTop+video_content.offsetHeight) && (video_player.style.position != "fixed") && (video_player.currentTime>0)){
 			video_player.style.position = "fixed";
 			video_player.style.left = "1px";
 			video_player.style.bottom = "1px";
@@ -35,7 +35,7 @@ window.onload = function(){
 			
 		}
 		else if(window.pageYOffset<=video_content.offsetTop+video_content.offsetHeight){
-			video_player.style.position = "initial";
+			video_player.style.position = "relative";
 			video_player.width =$(window).width()*95/100;
 			video_player.style.height = "auto";
 		}

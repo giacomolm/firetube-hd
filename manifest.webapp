@@ -5,6 +5,7 @@
     "launch_path": "/index.html",
     "type": "privileged",
     "permissions": {
-        "systemXHR": { }
+        "systemXHR": { },
+	"audio-channel-content": {}
     }
 }

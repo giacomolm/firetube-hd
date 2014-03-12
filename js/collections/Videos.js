@@ -5,11 +5,18 @@ define(["jquery", "underscore", "ractive", "models/Video"],
         model: Video,
 	    
 	initialize: function(type, query,  startIndex){
+		this.query = query;
 		if(type == "search"){
 			this.searchVideos(query, startIndex);
 		}
 		else if(type=="related"){
 			this.relatedVideos(query, startIndex);
+		}
+		else if(type=="channel"){
+			this.searchChannel(query,startIndex);
+		}
+		else if(type=="popular"){
+			this.getPopular(startIndex);
 		}
 	},    
 	
@@ -20,7 +27,7 @@ define(["jquery", "underscore", "ractive", "models/Video"],
 			this.video.thumbnail = entries[i].media$group.media$thumbnail[0].url
 			this.video.title = entries[i].title.$t;
 			this.video.link = entries[i].link[0].href;
-			this.video.author = entries[i].author[0].name.$t;
+			this.video.author = entries[i].author[0].uri.$t.substr(entries[i].author[0].uri.$t.lastIndexOf("/")+1);//entries[i].author[0].name.$t;
 			this.video.thumbnail = entries[i].media$group.media$thumbnail[0].url;
 			this.video.duration = 0;
 			if(entries[i].media$group.media$content) this.video.duration = entries[i].media$group.media$content[0].duration;
@@ -34,8 +41,7 @@ define(["jquery", "underscore", "ractive", "models/Video"],
 		collection.trigger("completed");
 	},
 	
-        //firebase: new Firebase("https://cicero.firebaseio.com/pois"),
-	getPopular : function(){	
+	getPopular : function(startIndex){	
 		var collection = this;
 		var oReq = new XMLHttpRequest({ mozSystem: true });		
 		oReq.onreadystatechange = function (event) {
@@ -46,8 +52,9 @@ define(["jquery", "underscore", "ractive", "models/Video"],
 				var entries = feed.entry || [];														
 				collection.fillVideo(entries, collection);
 		    }
-		};		
-		oReq.open("get", 'https://gdata.youtube.com/feeds/api/standardfeeds/most_popular?alt=json&max-results=7', true);			
+		};
+		this.url = 'https://gdata.youtube.com/feeds/api/standardfeeds/most_popular?alt=json&start-index='+startIndex+'&max-results=5';
+		oReq.open("get", this.url, true);			
 		oReq.send();
 	},
 	
@@ -62,8 +69,9 @@ define(["jquery", "underscore", "ractive", "models/Video"],
 				var entries = feed.entry || [];		
 				collection.fillVideo(entries, collection);
 		    }
-		};		
-		oReq.open("get", 'http://gdata.youtube.com/feeds/api/videos?alt=json&start-index='+startIndex+'&max-results=5&q='+query, true);			
+		};	
+		this.url = 'http://gdata.youtube.com/feeds/api/videos?alt=json&start-index='+startIndex+'&max-results=5&q='+query;
+		oReq.open("get", this.url , true);			
 		oReq.send();
 	},
 	
@@ -78,11 +86,27 @@ define(["jquery", "underscore", "ractive", "models/Video"],
 				var entries = feed.entry || [];		
 				collection.fillVideo(entries, collection);
 		    }
-		};		
-		oReq.open("get", 'https://gdata.youtube.com/feeds/api/videos/'+id+'/related?v=2&start-index='+startIndex+'&max-results=5&alt=json', true);			
+		};
+		this.url = 'https://gdata.youtube.com/feeds/api/videos/'+id+'/related?v=2&start-index='+startIndex+'&max-results=5&alt=json';
+		oReq.open("get", this.url, true);			
 		oReq.send();
 	},
 	
+	searchChannel: function(author, startIndex){
+		var collection = this;
+	        var oReq = new XMLHttpRequest({ mozSystem: true });		
+		oReq.onreadystatechange = function (event) {
+		    var xhr = event.target;		    
+		    if (xhr.readyState === 4 && xhr.status === 200) {							
+				var data = JSON.parse(xhr.responseText);
+				var feed = data.feed;
+				var entries = feed.entry || [];		
+				collection.fillVideo(entries, collection);
+		    }
+		};		
+		oReq.open("get", 'http://gdata.youtube.com/feeds/api/videos?alt=json&start-index='+startIndex+'&max-results=5&author='+author, true);			
+		oReq.send();
+	}
       });
 
     return Videos;

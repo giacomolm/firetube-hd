@@ -142,7 +142,7 @@ div::-webkit-scrollbar {
 /* HEADER */
 #header {
 	background-color:#f1f1f1;
-	border-top: 5px solid #5a5959;
+	/*border-top: 5px solid #5a5959;*/
 	background-repeat:repeat-x;
 	
 }
@@ -297,7 +297,6 @@ div::-webkit-scrollbar {
 
 .search_div{
 	background-color: #fff;
-	padding-top : 80px;
 	width:100%;
 	white-space: nowrap;
 }
