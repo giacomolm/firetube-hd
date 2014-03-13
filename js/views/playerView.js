@@ -5,8 +5,6 @@ define(["jquery", "underscore", "backbone", "ractive", "collections/Videos","uti
        
         events : {
             "change #formats" : "changeFormat",
-	    "tap #channel" : "openChannel",
-	    "click #channel" : "openChannel"
         },
 	
         initialize: function () {
@@ -18,10 +16,10 @@ define(["jquery", "underscore", "backbone", "ractive", "collections/Videos","uti
 			Utils.display(this.model, this.collection);
 			var relatedView = new searchView({collection : (new Videos("related", this.model, 5)), model : "related"});
 			this.relatedView = relatedView;
-			this.on("scrollBottom", function(){
-				console.log("scroll reach");
+			this.on("scrollBottom", function(){				
 				relatedView.trigger("scrollBottom");
 			});
+			Utils.setHistory(this.model);
 		}
 		else Utils.displayOnly(localStorage.getItem("url"), this.collection);
 		//this.on("scrollBottom", this.relatedView.trigger("scrollBottom"));
@@ -41,11 +39,6 @@ define(["jquery", "underscore", "backbone", "ractive", "collections/Videos","uti
 		//return to top once changed
 		window.scrollTo(0,0);
 		this.render();
-	},
-	
-	openChannel: function(ev){	
-		var author = ev.target.innerHTML; //fix the alias
-		Backbone.history.navigate("channel/"+author, {trigger: true});
 	},
 
         render: function (eventName) {

@@ -33,7 +33,6 @@ define(["jquery", "underscore", "backbone", "ractive","views/videoItemView","col
         },
 	
 	scrollBottom: function(){
-		console.log('on scroll');
 		this.startIndex = this.startIndex + 5;
 		this.collection = new Videos(this.type, this.query, this.startIndex);
 		this.collection.on("completed", this.renderSub, this);

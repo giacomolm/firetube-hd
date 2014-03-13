@@ -1,5 +1,5 @@
-define(["jquery", "underscore", "ractive", "models/Video"],
-    function ($,_,Ractive,Video) {
+define(["jquery", "underscore", "ractive", "models/Video", "utils"],
+    function ($,_,Ractive,Video, Utils) {
 
     var Videos = Backbone.Collection.extend({
         model: Video,
@@ -17,6 +17,9 @@ define(["jquery", "underscore", "ractive", "models/Video"],
 		}
 		else if(type=="popular"){
 			this.getPopular(startIndex);
+		}
+		else if(type=="latest"){
+			this.latestVideos(startIndex);
 		}
 	},    
 	
@@ -106,6 +109,30 @@ define(["jquery", "underscore", "ractive", "models/Video"],
 		};		
 		oReq.open("get", 'http://gdata.youtube.com/feeds/api/videos?alt=json&start-index='+startIndex+'&max-results=5&author='+author, true);			
 		oReq.send();
+	},
+	
+	latestVideos: function(startIndex){
+		var collection = this;
+		var entries = new Array();
+		var history = JSON.parse(Utils.getHistory());
+		for(i=startIndex-5; i<Math.min(history.length,startIndex); i++){
+			var infoReq = new XMLHttpRequest({ mozSystem: true });
+			infoReq.onreadystatechange = function (event) {
+			    var xhr = event.target;
+			    var data = xhr.responseText;
+			    if (xhr.readyState === 4 && xhr.status === 200 ) {
+				var entry = (JSON.parse(data)).entry;
+				entries[entries.length] = entry;
+				console.log(history.length);
+				if((entries.length == 5) || (((startIndex-5)+entries.length)==history.length)){
+					collection.fillVideo(entries, collection);
+				}
+			     }
+			};
+
+			infoReq.open("get", 'http://gdata.youtube.com/feeds/api/videos/'+history[i]+'?v=2&alt=json', true);		
+			infoReq.send();
+		}
 	}
       });
 

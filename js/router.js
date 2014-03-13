@@ -8,7 +8,8 @@ define(["jquery", "underscore", "backbone", "utils","collections/Videos","views/
 	"index": "index",
         "watch/:link": "watch",
         "search/:query": "search",
-	"channel/:author": "channel"
+	"channel/:author": "channel",
+	"latest": "latest"
       },
 
       initialize: function () {
@@ -37,6 +38,11 @@ define(["jquery", "underscore", "backbone", "utils","collections/Videos","views/
       channel: function(author){
 	var channel = new searchView({collection: (new Videos("channel", author, 5)), model : "channel"});
 	this.changePage(channel);
+      },
+      
+      latest: function(){
+	var latest = new searchView({collection: (new Videos("latest",  '', 5)), model : "latest"});
+	this.changePage(latest);
       },
       
       getCurrentView: function(){
