@@ -7,7 +7,8 @@ define(["jquery", "backbone", "ractive","utils","text!templates/topStructureView
        
         events : {
             "tap #search_button" : "searchVideos",
-	    "click #search_button" : "searchVideos"
+	    "click #search_button" : "searchVideos",
+	    "change #query_field" : "suggestQuery"
         },
 	
 	searchVideos: function(callback){
@@ -22,10 +23,17 @@ define(["jquery", "backbone", "ractive","utils","text!templates/topStructureView
 		}
 	},
 	
-        initialize: function () {				
+        initialize: function () {
 		this.render();		
         },
 	
+	suggestQuery : function(){
+		
+	},
+	
+	setTitle: function(title){
+		document.getElementById('header_div').innerHTML = title;
+	},
        
         render: function (eventName) {
            $(this.el).html(template);

@@ -16,32 +16,39 @@ define(["jquery", "underscore", "backbone", "utils","collections/Videos","views/
 	this.currentView = undefined;
 	this.addCustomEvents();
 	Utils.setAppRouter(this);
-	      
-	$('#header').append((new topStructureView()).el);
+	
+	//initially, append the top div (containing the menu)
+	this.headerView = new topStructureView();
+	$('#header').append(this.headerView.el);
       },
      
       index: function(){
 	var index = new searchView({collection: (new Videos("popular", '', 1)), model:"popular"});
+	this.headerView.setTitle('Firetube');
 	this.changePage(index);
       },
       
       watch: function(link){
 	var player = new playerView({model : link});
+	this.headerView.setTitle('Video');
 	this.changePage(player);
       },
       
       search: function(query){
 	 var search = new searchView({collection: (new Videos("search", query, 5)), model:"search"});
+	 this.headerView.setTitle('Search: '+query);
 	 this.changePage(search);
       },
       
       channel: function(author){
 	var channel = new searchView({collection: (new Videos("channel", author, 5)), model : "channel"});
+	this.headerView.setTitle('Channel: '+author);
 	this.changePage(channel);
       },
       
       latest: function(){
 	var latest = new searchView({collection: (new Videos("latest",  '', 5)), model : "latest"});
+	this.headerView.setTitle('Latest');
 	this.changePage(latest);
       },
       
@@ -50,6 +57,7 @@ define(["jquery", "underscore", "backbone", "utils","collections/Videos","views/
       },
       
       addCustomEvents: function(){
+	//propagate the scroll event to the current view
 	$(window).scroll(function() {
 	   if($(window).scrollTop() + $(window).height() >= $(document).height()) {		   
 		   if(Utils.appRouter){
