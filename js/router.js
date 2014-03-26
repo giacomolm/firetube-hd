@@ -20,6 +20,8 @@ define(["jquery", "underscore", "backbone", "utils","collections/Videos","views/
 	//initially, append the top div (containing the menu)
 	this.headerView = new topStructureView();
 	$('#header').append(this.headerView.el);
+	this.player = new playerView();
+	$('#player').append(this.player.el);
       },
      
       index: function(){
@@ -29,9 +31,9 @@ define(["jquery", "underscore", "backbone", "utils","collections/Videos","views/
       },
       
       watch: function(link){
-	var player = new playerView({model : link});
+	this.player.setModel(link);
 	this.headerView.setTitle('Video');
-	this.changePage(player);
+	this.currentView = this.player;
       },
       
       search: function(query){
@@ -65,6 +67,10 @@ define(["jquery", "underscore", "backbone", "utils","collections/Videos","views/
 		   }
 	   }
 	});
+	
+	$(document).change(function(ev) {
+			Utils.appRouter.getCurrentView().trigger("change", ev);
+	}, this);	
        },
 	
       changePage: function (page) {

@@ -1,3 +1,6 @@
+<video mozaudiochannel="content" id="video_player" class="video_player" controls="" autoplay="true" ondblclick="" style="margin-top:10px; z-index:99;" poster="{{thumbnail}}" preload="true" src="{{urls[0].url}}" onloadeddata="resizeBody()">><!--type="video/{{urls[0].ext}}">-->	</video>
+<div id="under_video"></div>
+
 <div>
 	<h3>{{title}}</h3>
 	<h5 id="channel" onclick="Backbone.history.navigate('channel/{{author}}', {trigger: true})">{{alias}}</h5><!--here the search channel-->

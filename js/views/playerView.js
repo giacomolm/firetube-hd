@@ -2,32 +2,38 @@ define(["jquery", "underscore", "backbone", "ractive", "collections/Videos","uti
     function ($, _, Backbone, Ractive, Videos, Utils, searchView, searchDLView,template) {
 
     var playerView = Backbone.View.extend({
-       
+	    
         events : {
             "change #formats" : "changeFormat",
         },
 	
         initialize: function () {
+		if(this.model) this.setModel(this.model);
+        },
+	
+	setModel: function(model){
 		//i'm creating an empty collection in order to fill the right model, throught the display method
 		this.collection = new Videos();
-		
-		if(!Utils.isALink(this.model)){
+		if(!Utils.isALink(model)){
 			this.collection.on("completed", this.setVideos, this);
-			Utils.display(this.model, this.collection);
-			var relatedView = new searchView({collection : (new Videos("related", this.model, 5)), model : "related"});
+			Utils.display(model, this.collection);
+			var relatedView = new searchView({collection : (new Videos("related", model, 5)), model : "related"});
 			this.relatedView = relatedView;
+			//propagate the scroll event on subview
 			this.on("scrollBottom", function(){				
 				relatedView.trigger("scrollBottom");
 			});
-			Utils.setHistory(this.model);
+			Utils.setHistory(model);
 		}
 		else {
 			this.collection.on("completed", this.setDLVideos, this);
 			this.relatedView = new searchDLView({collection : this.collection, model : "url"});
 			Utils.displayOnly(localStorage.getItem("url"), this.collection);
 		}
-		//this.on("scrollBottom", this.relatedView.trigger("scrollBottom"));
-        },
+		
+		//propagate the change event when the current view is different from the video player
+		this.on('change', function(ev){ this.changeFormat(ev);},  this);
+	},
 	
 	setVideos: function(){
 		this.data = this.collection.get(0);	
@@ -39,23 +45,19 @@ define(["jquery", "underscore", "backbone", "ractive", "collections/Videos","uti
 		this.render();
 	},
        
-	changeFormat: function(ev){
+	changeFormat: function(ev,a,b){
 		var id = (ev.target).value;
-		//switch the first element of the collection
-		var temp = this.data.urls[0];
-		this.data.urls[0] = this.data.urls[id];
-		this.data.urls[id] = temp;
 		//return to top once changed
 		window.scrollTo(0,0);
-		this.render();
+		Utils.getVideoPlayer().src = this.data.urls[id].url;
 	},
 
         render: function (eventName) {
-	    Utils.getVideoPlayer().src = this.data.urls[0].url;
-	    Utils.getVideoPlayer().poster = this.data.thumbnail;
-	    //i'm not appending the video info to the current div, but under the video	
-            this.template = new Ractive({el : $('#under_video'), template: template, data: this.data});	    	    
-	    if(this.relatedView) $(this.el).append(this.relatedView.el);
+	    
+	    //IMPORTANT: i'm not appending the video info to the current div, but under the video	
+            this.template = new Ractive({el : $('#player'), template: template, data: this.data});
+	    
+	    if(this.relatedView) $("#container").html(this.relatedView.el);
             return this;
         }
        

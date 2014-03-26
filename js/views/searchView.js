@@ -13,7 +13,7 @@ define(["jquery", "underscore", "backbone", "ractive","views/videoItemView","col
 	searchVideos: function(callback){
 		var query = document.getElementById('query_field').value;
 		if(query && Utils.isALink(query)){
-			//in this case was inserted a link 
+			//in this case was inserted a link
 			localStorage.setItem("url", query); 
 			Backbone.history.navigate("watch/https", {trigger: true});
 		}

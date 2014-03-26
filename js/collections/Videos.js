@@ -5,6 +5,7 @@ define(["jquery", "underscore", "ractive", "models/Video", "utils"],
         model: Video,
 	    
 	initialize: function(type, query,  startIndex){
+		//instanciate the desidered video collection  based on the type passed 
 		this.query = query;
 		if(type == "search"){
 			this.searchVideos(query, startIndex);
@@ -123,7 +124,6 @@ define(["jquery", "underscore", "ractive", "models/Video", "utils"],
 			    if (xhr.readyState === 4 && xhr.status === 200 ) {
 				var entry = (JSON.parse(data)).entry;
 				entries[entries.length] = entry;
-				console.log(history.length);
 				if((entries.length == 5) || (((startIndex-5)+entries.length)==history.length)){
 					collection.fillVideo(entries, collection);
 				}
